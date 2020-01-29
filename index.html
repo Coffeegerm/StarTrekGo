@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>TNG Search</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+
+  <body>
+    <main>
+      <header>
+        <a class="logo" href="/">TNG Search</a>
+        <form action="/search" method="GET">
+          <input
+            autofocus
+            class="search-input"
+            value=""
+            placeholder="Enter a word"
+            type="search"
+            name="q"
+          />
+        </form>
+      </header>
+
+      <section class="container">
+        <ul class="search-results">
+          {{ range . }}
+          <li class="dialog">
+            <div>
+              <h3 class="title">Episode: {{ .Episodename }}</h3>
+              {{ if eq .Texttype "speech" }}
+              <p class="description">{{ .Who }}: <i>"{{ .Text }}"</i></p>
+              {{ else }}
+              <p class="description">{{ .Text }}</p>
+              {{ end }}
+            </div>
+          </li>
+          {{ end }}
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>
