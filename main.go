@@ -28,6 +28,8 @@ type Dialog []struct {
 
 var tpl = template.Must(template.ParseFiles("index.html"))
 
+var searchEndpoint = "https://tngapi-awicwils6q-ew.a.run.app/?q=%s"
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	tpl.Execute(w, nil)
 }
@@ -35,7 +37,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	u, err := url.Parse(r.URL.String())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteStatusInternalServerError(w)
 		w.Write([]byte("Internal server error"))
 		return
 	}
@@ -45,22 +47,22 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	dialog := &Dialog{}
 
-	endpoint := fmt.Sprintf("https://tngapi-awicwils6q-ew.a.run.app/?q=%s", url.QueryEscape(searchKey))
+	endpoint := fmt.Sprintf(searchEndpoint, url.QueryEscape(searchKey))
 	resp, err := http.Get(endpoint)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteStatusInternalServerError(w)
 		return
 	}
 
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteStatusInternalServerError(w)
 		return
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&dialog)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteStatusInternalServerError(w)
 		return
 	}
 
@@ -68,16 +70,24 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = tpl.Execute(w, dialog)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteStatusInternalServerError(w)
 	}
+}
+
+func WriteStatusInternalServerError(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusInternalServerError)
 }
 
 func main() {
 	mux := http.NewServeMux()
 	fs := http.FileServer(http.Dir("assets"))
+	
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
+	
 	mux.HandleFunc("/search", searchHandler)
 	mux.HandleFunc("/", indexHandler)
+	
 	http.ListenAndServe(":8080", mux)
+
 	fmt.Println("Application running on localhost:8080")
 }
